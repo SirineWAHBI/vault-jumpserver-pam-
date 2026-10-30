@@ -1,0 +1,33 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Private keys and certificates
+keys/
+*.pem
+*.key
+*_rsa
+*_rsa.pub
+*-cert.pub
+
+# Vault initialization and secret files
+vault-init-keys.txt
+*.token
+*.secret
+
+# Session data and sensitive datasets
+real_sessions.json
+*.csv
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local logs
+*.log
+
+# Streamlit local secrets
+.streamlit/secrets.toml
