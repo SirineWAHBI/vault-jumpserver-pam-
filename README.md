@@ -1,156 +1,160 @@
-\# PAM Solution with JumpServer and HashiCorp Vault
+Privileged Access Management with JumpServer and HashiCorp Vault
 
+A laboratory implementation of a Privileged Access Management (PAM) solution, built during a cybersecurity engineering internship in 2026. It centralizes and audits privileged access, keeps secrets in HashiCorp Vault, rotates passwords automatically, and flags unusual sessions with a machine-learning model.
 
+Problem
 
-\## Overview
+Privileged accounts are high-value targets. Static passwords, shared administrator accounts and missing session traces make misuse hard to prevent and hard to investigate. The project addresses one question:
 
 
 
-This project documents a Privileged Access Management (PAM) solution developed during a cybersecurity engineering internship in 2026.
+How can privileged access be controlled and secured, secrets protected, sessions traced, and unusual user behavior detected automatically?
 
+Highlights
 
+Area
 
-It combines centralized privileged access management, secrets management, password rotation automation, SSH certificate workflows, and behavioral anomaly detection.
+What was built
 
+Access control
 
+Named users with MFA, authorization rules, login ACLs, idle and maximum session time
 
-The anomaly detection evaluation reported in the project documentation includes simulated anomalous sessions. The reported detection rate must be interpreted within that test dataset.
+Command filtering
 
+Real-time blocking of risky commands (reboot, shutdown, rm -rf, mkfs, dd)
 
+Audit
 
-\## Objectives
+Recorded and replayable sessions, with a per-command history
 
+Secrets
 
+Vault KV v2 with a new version for every rotation
 
-\- Centralize privileged access and session auditing.
+Least privilege
 
-\- Protect secrets with HashiCorp Vault.
+Automation authenticates through Vault AppRole with a narrow policy
 
-\- Automate password rotation and credential synchronization.
+Rotation
 
-\- Apply least-privilege access through Vault AppRole.
+Target host, then Vault, then JumpServer; failures raise a Discord alert
 
-\- Explore SSH certificate-based authentication.
+SSH certificates
 
-\- Analyze collected sessions with Isolation Forest.
+Short-lived certificates signed by a Vault CA
 
-\- Present detection results through a dashboard and notifications.
+Anomaly detection
 
-\- Validate the password rotation workflow against a Windows target.
+Isolation Forest on session features, with dashboard and alerts
 
+Multi-OS
 
+The rotation workflow validated on a Linux and a Windows target
 
-\## Architecture
 
 
+Architecture
 
-The documented solution uses JumpServer, HashiCorp Vault, Python automation, an anomaly detection workflow, and a Windows target environment.
+flowchart LR
 
+&#x20;   U\[Administrator] -->|web or SSH| JS\[JumpServer<br/>access, sessions, audit]
 
+&#x20;   JS -->|managed sessions| T\[Targets<br/>Linux and Windows]
 
-See \[Architecture](docs/architecture/architecture.md) for the component overview and workflow.
+&#x20;   V\[HashiCorp Vault<br/>KV v2, SSH CA, AppRole] -->|rotated secrets| T
 
+&#x20;   A\[Python automation] -->|read and write secrets| V
 
+&#x20;   A -->|synchronize credentials| JS
 
-\## Main Features
+&#x20;   JS -->|session data via API| ML\[Isolation Forest]
 
+&#x20;   ML --> D\[Streamlit dashboard]
 
+&#x20;   ML --> N\[Discord alerts]
 
-\- Privileged access management with JumpServer.
+&#x20;   A --> N
 
-\- Versioned secret storage with Vault KV v2.
 
-\- Restricted access using Vault AppRole.
 
-\- Password rotation automation.
+Full description: docs/architecture/architecture.md.
 
-\- SSH certificate workflow documentation.
+Results at a glance
 
-\- Session analysis using Isolation Forest.
+Metric
 
-\- Discord notifications, where configured.
+Value
 
-\- Streamlit monitoring dashboard.
+Sessions analyzed
 
-\- Windows password rotation validation.
+361 (46 real, 315 simulated)
 
+Anomalies flagged
 
+18
 
-\## Technologies
+Flagged among real sessions
 
+7 of 46
 
+Injected anomalies detected
 
-JumpServer, HashiCorp Vault, Python, Isolation Forest, Streamlit, REST APIs, Linux, Windows.
+11 of 15 (73 %)
 
 
 
-\## Results
 
 
+The 73 % figure is measured on anomalies injected into simulated data, and the real sessions come from the lab itself. It shows that the pipeline works end to end; it does not predict production performance. Details: docs/results.md.
 
-The project documentation covers the following outcomes:
+Repository contents
 
+.
 
+├── docs/
 
-Configuration of privileged access management and access controls.
+│   ├── architecture/architecture.md
 
+│   ├── results.md
 
+│   └── screenshots/
 
-Integration of Vault for secret management and restricted access.
+├── policies/           
 
+├── .env.example
 
+├── .gitignore
 
-Password rotation workflow validation against a Windows target.
+└── README.md
 
+Screenshots
 
+JumpServer access control
 
-Analysis of collected session data using Isolation Forest.
+Vault secret management
 
+!\[Access control](docs/screenshots/01-jumpserver-access-control.png) 
 
+!\[Vault](docs/screenshots/02-vault-secret-management.png) 
 
-Presentation of anomaly detection results through a dashboard and notifications.
 
 
 
-The anomaly detection results are specific to the evaluated dataset, which includes simulated sessions. They should not be interpreted as a guarantee of detection performance in production.
 
+Anomaly dashboard
 
+Discord alert
 
-See Detailed Results for more information.
+!\[Anomaly detection](docs/screenshots/03-anomaly-detection.png) 
 
+!\[Discord alert](docs/screenshots/04-discord-alert.png) 
 
 
-\## Screenshots
 
+Context
 
+Engineering internship, Société Tunisienne de l'Électricité et du Gaz (STEG), ESPRIT, academic year 2025–2026.
 
-\### JumpServer — Access Control
 
-!\[Access control](docs/screenshots/01-jumpserver-access-control.png)
-
-
-
-\### Vault — Secret Management
-
-!\[Vault](docs/screenshots/02-vault-secret-management.png)
-
-
-
-\### Anomaly Detection
-
-!\[Anomaly detection](docs/screenshots/03-anomaly-detection.png)
-
-
-
-\### Discord Alerts
-
-!\[Discord alert](docs/screenshots/04-discord-alert.png)
-
-
-
-\## Context
-
-
-
-Cybersecurity engineering internship project, 2026.
 
