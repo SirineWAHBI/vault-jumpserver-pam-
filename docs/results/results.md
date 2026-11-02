@@ -1,50 +1,57 @@
-# Results
+# Vault Policies and AppRole
 
-All results come from the lab described in [Architecture](../architecture/architecture.md). The lab has been dismantled. Screenshots in `docs/screenshots/` provide visual evidence of selected configurations and results.
+This directory documents the access model used by the PAM laboratory. The files in this directory are documentation and do not configure Vault automatically.
 
-## 1. Access Control and Audit (JumpServer)
+## 1. Files
 
-| Feature | Configuration | Observed Result |
-|---|---|---|
-| Named user | MFA enabled and dedicated authorization rule | Asset visible and reachable from the user's workbench |
-| Idle limit | 5 minutes | Session closed automatically after inactivity |
-| Login ACL | Reject rule for weekend days | Sign-in refused with an ACL message before the password check |
-| Command filter | Reject rules for `rm -rf`, `shutdown`, `reboot`, `mkfs`, and `dd` | `reboot` blocked in real time |
-| Audit | Session recording and command log | Sessions replayable; each command listed with its risk level |
-| Key-based account | Separate account using an SSH key | Connection works from the CLI and from JumpServer |
-
-## 2. Secrets Management (HashiCorp Vault)
-
-| Item | Result |
+| File | Purpose |
 |---|---|
-| Operating mode | Production mode with file storage and Shamir unsealing (3 of 5 shares) |
-| KV v2 | Each rotation adds a version; metadata shows version history |
-| SSH certificate authority | A signed certificate is accepted and refused after its validity period expires |
-| AppRole | Authentication uses a Role ID and Secret ID; the resulting token is restricted by a policy |
-| Negative tests | Unauthorized path access, enabling a secrets engine, and listing the parent path were refused |
+| `ssh-rotation-policy.hcl` | Policy attached to the AppRole used by the password-rotation script. Reconstructed from the project documentation; the original file was not recovered. |
 
-## 3. Password Rotation
+## 2. Security Principles
 
-| Target | Result |
+- Grant only the paths and operations required by the script.
+- Avoid broad wildcards, delete permissions, and administrative paths.
+- Keep Role IDs and Secret IDs out of source code and version control.
+- Never embed administrative tokens in automation scripts.
+- Use short-lived credentials and restrictive policies.
+
+## 3. AppRole Settings Used in the Lab
+
+| Setting | Value |
 |---|---|
-| Linux | Target, Vault, and JumpServer updated in one run |
-| Windows (physical host with OpenSSH) | Same workflow validated; the password-change command differs (`Set-LocalUser`) |
-| Failure handling | An unreachable target address stopped the run and triggered a Discord alert |
+| Role name | `ssh-rotation-script` |
+| Attached policy | `ssh-rotation-policy` |
+| Token TTL | 1 hour |
+| Token maximum TTL | 4 hours |
+| Secret ID TTL | 1 hour 30 minutes |
+| Secret ID uses | 10 |
 
-## 4. Anomaly Detection
+## 4. Vault Configuration Commands
 
-| Metric | Value |
-|---|---:|
-| Sessions analyzed | 361 (46 real and 315 simulated) |
-| Anomalies flagged | 18 |
-| Real sessions flagged | 7 of 46 |
-| Injected anomalies detected | 11 of 15 (73.3%) |
+Run these commands only in a test environment where you have permission to configure Vault.
 
-## 5. Interpretation
+```bash
+vault policy write ssh-rotation-policy policies/ssh-rotation-policy.hcl
 
-The 73.3% detection rate was measured against anomalies deliberately injected into the simulated dataset. The number of real sessions was limited, and these sessions were generated during laboratory activities. Some flagged sessions therefore reflected late-night testing rather than malicious behavior.
+vault auth enable approle
 
-The results demonstrate that the pipeline operates from session extraction through anomaly scoring and alerting. However, they do not establish production-level detection accuracy.
+vault write auth/approle/role/ssh-rotation-script \
+  token_policies="ssh-rotation-policy" \
+  token_ttl=1h \
+  token_max_ttl=4h \
+  secret_id_ttl=90m \
+  secret_id_num_uses=10
+```
 
-The anomaly detection pipeline processes collected sessions in batches; it is not a real-time detection system.
+**Important:** These commands configure Vault resources. They do not recreate the missing policy file. The policy must exist at the specified path before the first command is run.
+
+## 5. Validation Checklist
+
+- [ ] Authentication with the Role ID and Secret ID returns a token.
+- [ ] Reading and updating the two authorized secret paths succeeds.
+- [ ] Reading unauthorized paths is denied.
+- [ ] Enabling a secrets engine is denied to the restricted role.
+- [ ] Listing unauthorized parent paths is denied.
+- [ ] An expired or exhausted Secret ID is rejected.
 
