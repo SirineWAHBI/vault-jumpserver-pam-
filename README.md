@@ -1,160 +1,102 @@
-Privileged Access Management with JumpServer and HashiCorp Vault
+# Privileged Access Management with JumpServer and HashiCorp Vault
 
-A laboratory implementation of a Privileged Access Management (PAM) solution, built during a cybersecurity engineering internship in 2026. It centralizes and audits privileged access, keeps secrets in HashiCorp Vault, rotates passwords automatically, and flags unusual sessions with a machine-learning model.
+A laboratory implementation of a Privileged Access Management (PAM) solution, developed during a cybersecurity engineering internship in 2026. It centralizes and audits privileged access, manages secrets with HashiCorp Vault, automates password rotation, and flags unusual sessions using a machine-learning model.
 
-Problem
+## Problem
 
-Privileged accounts are high-value targets. Static passwords, shared administrator accounts and missing session traces make misuse hard to prevent and hard to investigate. The project addresses one question:
+Privileged accounts are high-value targets. Static passwords, shared administrator accounts, and missing session traces make misuse difficult to prevent and investigate.
 
+This project addresses the following question:
 
+> How can privileged access be controlled and secured, secrets protected, sessions traced, and unusual user behavior detected automatically?
 
-How can privileged access be controlled and secured, secrets protected, sessions traced, and unusual user behavior detected automatically?
+## Highlights
 
-Highlights
+| Area | What was built |
+|---|---|
+| Access control | Named users, MFA where configured, authorization rules, login ACLs, and session time limits |
+| Command filtering | Configured filtering for potentially risky commands |
+| Audit | Recorded and replayable sessions, with command history where available |
+| Secrets | Vault KV v2 for versioned secret storage |
+| Least privilege | Vault AppRole authentication with a restricted policy |
+| Rotation | Password rotation workflow involving the target host, Vault, and JumpServer |
+| SSH certificates | Documentation and exploration of short-lived SSH certificates signed by a Vault CA |
+| Anomaly detection | Isolation Forest session analysis, with dashboard and notifications |
+| Multi-OS | Password rotation workflow validation against Linux and Windows targets |
 
-Area
+## Architecture
 
-What was built
+The documented solution combines JumpServer, HashiCorp Vault, Python automation, target machines, and a session-analysis workflow.
 
-Access control
-
-Named users with MFA, authorization rules, login ACLs, idle and maximum session time
-
-Command filtering
-
-Real-time blocking of risky commands (reboot, shutdown, rm -rf, mkfs, dd)
-
-Audit
-
-Recorded and replayable sessions, with a per-command history
-
-Secrets
-
-Vault KV v2 with a new version for every rotation
-
-Least privilege
-
-Automation authenticates through Vault AppRole with a narrow policy
-
-Rotation
-
-Target host, then Vault, then JumpServer; failures raise a Discord alert
-
-SSH certificates
-
-Short-lived certificates signed by a Vault CA
-
-Anomaly detection
-
-Isolation Forest on session features, with dashboard and alerts
-
-Multi-OS
-
-The rotation workflow validated on a Linux and a Windows target
-
-
-
-Architecture
-
+```mermaid
 flowchart LR
+    U[Administrator] -->|Web or SSH| JS[JumpServer: access, sessions, audit]
+    JS -->|Managed sessions| T[Targets: Linux and Windows]
+    A[Python automation] -->|Read and write secrets| V[HashiCorp Vault: KV v2, AppRole, SSH CA]
+    A -->|Synchronize credentials| JS
+    A -->|Rotate credentials| T
+    JS -->|Session data| ML[Isolation Forest]
+    ML --> D[Streamlit dashboard]
+    ML --> N[Discord notifications]
+    A --> N
+```
 
-&#x20;   U\[Administrator] -->|web or SSH| JS\[JumpServer<br/>access, sessions, audit]
+See [Architecture Documentation](docs/architecture/architecture.md) for the component overview and workflow.
 
-&#x20;   JS -->|managed sessions| T\[Targets<br/>Linux and Windows]
+## Results at a Glance
 
-&#x20;   V\[HashiCorp Vault<br/>KV v2, SSH CA, AppRole] -->|rotated secrets| T
+The project report documents session analysis involving real lab sessions and simulated data.
 
-&#x20;   A\[Python automation] -->|read and write secrets| V
+| Metric | Value |
+|---|---:|
+| Sessions analyzed | 361 (46 real, 315 simulated) |
+| Anomalies flagged | 18 |
+| Flagged among real sessions | 7 of 46 |
+| Injected anomalies detected | 11 of 15 (73%) |
 
-&#x20;   A -->|synchronize credentials| JS
+The 73% figure refers to injected anomalies in the evaluated simulated dataset. It is not a measure of expected production performance.
 
-&#x20;   JS -->|session data via API| ML\[Isolation Forest]
+See [Detailed Results](docs/results/results.md) for further information.
 
-&#x20;   ML --> D\[Streamlit dashboard]
+## Repository Contents
 
-&#x20;   ML --> N\[Discord alerts]
-
-&#x20;   A --> N
-
-
-
-Full description: docs/architecture/architecture.md.
-
-Results at a glance
-
-Metric
-
-Value
-
-Sessions analyzed
-
-361 (46 real, 315 simulated)
-
-Anomalies flagged
-
-18
-
-Flagged among real sessions
-
-7 of 46
-
-Injected anomalies detected
-
-11 of 15 (73 %)
-
-
-
-
-
-The 73 % figure is measured on anomalies injected into simulated data, and the real sessions come from the lab itself. It shows that the pipeline works end to end; it does not predict production performance. Details: docs/results.md.
-
-Repository contents
-
+```text
 .
-
 ├── docs/
-
-│   ├── architecture/architecture.md
-
-│   ├── results.md
-
+│   ├── architecture/
+│   │   └── architecture.md
+│   ├── results/
+│   │   └── results.md
 │   └── screenshots/
-
-├── policies/           
-
+│       ├── 01-jumpserver-access-control.png
+│       ├── 02-vault-secret-management.png
+│       ├── 03-anomaly-detection.png
+│       └── 04-discord-alert.png
+├── policies/
+│   └── README.md
 ├── .env.example
-
 ├── .gitignore
-
 └── README.md
+```
 
-Screenshots
+## Screenshots
 
-JumpServer access control
+### JumpServer — Access Control
 
-Vault secret management
+![JumpServer access control](docs/screenshots/01-jumpserver-access-control.png)
 
-!\[Access control](docs/screenshots/01-jumpserver-access-control.png) 
+### HashiCorp Vault — Secret Management
 
-!\[Vault](docs/screenshots/02-vault-secret-management.png) 
+![Vault secret management](docs/screenshots/02-vault-secret-management.png)
 
+### Session Anomaly Detection
 
+![Anomaly detection dashboard](docs/screenshots/03-anomaly-detection.png)
 
+### Discord Alert
 
+![Discord alert](docs/screenshots/04-discord-alert.png)
 
-Anomaly dashboard
+## Context
 
-Discord alert
-
-!\[Anomaly detection](docs/screenshots/03-anomaly-detection.png) 
-
-!\[Discord alert](docs/screenshots/04-discord-alert.png) 
-
-
-
-Context
-
-Engineering internship, Société Tunisienne de l'Électricité et du Gaz (STEG), ESPRIT, academic year 2025–2026.
-
-
-
+Cybersecurity engineering internship project, STEG, ESPRIT, academic year 2025–2026.
