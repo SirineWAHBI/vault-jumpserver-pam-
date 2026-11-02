@@ -38,26 +38,18 @@ flowchart LR
 
 
 
-\## Components
+## Components
 
 
 
 | Component | Role | Notes |
-
 |---|---|---|
-
-| JumpServer Community Edition | Bastion for users, assets, authorization rules, session recording, and command filtering | Selected after comparing Teleport, Guacamole with Keycloak, and Boundary |
-
-| HashiCorp Vault | KV v2 secrets, SSH certificate authority, and AppRole authentication | File storage and Shamir unseal configuration (3 of 5) |
-
-| Python automation | Password rotation, synchronization with JumpServer, and alerting | Uses `hvac`, `requests`, `paramiko`, and HTTP-signature authentication |
-
-| Anomaly detection | Scores sessions using Isolation Forest | Batch pipeline operating on collected sessions |
-
-| Dashboard and alerts | Streamlit dashboard and Discord notifications | Alerts identify sessions flagged as unusual |
-
-| Targets | Ubuntu Linux and a physical Windows host with OpenSSH | The Windows host is used to validate multi-OS portability |
-
+| JumpServer Community Edition | Bastion, access control, session recording | Selected after comparing alternatives |
+| HashiCorp Vault | KV v2, SSH CA, AppRole | File storage and Shamir unseal |
+| Python automation | Password rotation and synchronization | Uses hvac, requests, and paramiko |
+| Anomaly detection | Session scoring | Batch processing with Isolation Forest |
+| Dashboard and alerts | Monitoring and notifications | Streamlit and Discord |
+| Targets | Linux and Windows | Windows target used for validation |
 
 
 ## Workflows
@@ -94,7 +86,7 @@ sequenceDiagram
 
 
 
-\### 2. Password Rotation
+### 2. Password Rotation
 
 
 
@@ -150,7 +142,7 @@ This pipeline runs after sessions have been collected. It is not continuous, rea
 
 
 
-\## Design Decisions
+## Design Decisions
 
 
 
