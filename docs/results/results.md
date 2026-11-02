@@ -1,42 +1,116 @@
-\# Project Results
+\# Results
 
 
 
-\## 1. Privileged Access Management
+All results come from the lab described in \[Architecture](../architecture/architecture.md). The lab has been dismantled; the screenshots in `docs/screenshots/` provide the available visual evidence.
 
 
 
-\- Centralized privileged access management using JumpServer.
-
-\- Configured asset access permissions and session auditing.
-
-\- Used HashiCorp Vault for secret storage and controlled access.
+\## 1. Access Control and Audit (JumpServer)
 
 
 
-\## 2. Password Rotation
+| Feature | Configuration | Observed Result |
+
+|---|---|---|
+
+| Named user | MFA enabled and dedicated authorization rule | Asset visible and reachable from the user's workbench |
+
+| Idle limit | 5 minutes | Session closed automatically after inactivity |
+
+| Login ACL | Reject rule for weekend days | Sign-in refused with an ACL message before the password check |
+
+| Command filter | Reject rules for `rm -rf`, `shutdown`, `reboot`, `mkfs`, and `dd` | `reboot` blocked in real time |
+
+| Audit | Session recording and command log | Sessions replayable; each command listed with its risk level |
+
+| Key-based account | Separate account using an SSH key | Connection works from the CLI and from JumpServer |
 
 
 
-\- Developed a password rotation workflow for test accounts.
-
-\- Integrated the workflow with Vault and JumpServer.
-
-\- Documented validation on a Windows test machine.
+\## 2. Secrets Management (HashiCorp Vault)
 
 
 
-\## 3. Anomaly Detection
+| Item | Result |
+
+|---|---|
+
+| Operating mode | Migrated from development mode to production mode with file storage and Shamir unsealing (3 of 5 shares) |
+
+| KV v2 | Each rotation adds a version; metadata shows the version history |
+
+| SSH certificate authority | A signed certificate is accepted and then refused after its short validity period expires |
+
+| AppRole | Authentication uses a Role ID and Secret ID; the resulting token is restricted by a policy |
+
+| Negative tests | Reading an unauthorized path, enabling a secrets engine, and listing the parent path were all refused |
 
 
 
-\- Developed a session-analysis pipeline using Isolation Forest.
-
-\- Analyzed collected session data to identify unusual behavior.
-
-\- Integrated Discord notifications and a Streamlit dashboard.
+\## 3. Password Rotation
 
 
+
+| Target | Result |
+
+|---|---|
+
+| Linux | Target, Vault, and JumpServer updated in one run |
+
+| Windows (physical host with OpenSSH) | Same workflow validated; only the password-change command differs (`Set-LocalUser`) |
+
+| Failure handling | An unreachable target address stopped the run and triggered a Discord alert |
+
+
+
+\## 4. Anomaly Detection
+
+
+
+| Metric | Value |
+
+|---|---:|
+
+| Sessions analyzed | 361 (46 real and 315 simulated) |
+
+| Anomalies flagged | 18 |
+
+| Real sessions flagged | 7 of 46 |
+
+| Injected anomalies detected | 11 of 15 (73.3%) |
+
+
+
+\## 5. Interpretation
+
+
+
+The 73.3% detection rate was measured against anomalies deliberately injected into the simulated dataset. The number of real sessions was limited, and these sessions were generated during laboratory activities. Some flagged sessions therefore reflected late-night testing rather than malicious behavior.
+
+
+
+The results demonstrate that the pipeline operates from session extraction through anomaly scoring and alerting. However, they do not establish production-level detection accuracy.
+
+
+
+The anomaly detection pipeline processes collected sessions in batches; it is not a real-time detection system.
+
+
+
+\## 6. Limitations
+
+
+
+\- The laboratory has been dismantled, so the environment cannot currently be retested.
+
+\- Screenshots provide visual evidence of selected configurations and results, but do not independently prove every test outcome.
+
+\- The dataset is limited and includes simulated sessions.
+
+\- A flagged session is not necessarily malicious.
+
+\- The measured detection rate should not be generalized to production environments.
 
 
 
