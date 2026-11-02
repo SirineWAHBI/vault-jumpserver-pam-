@@ -1,8 +1,8 @@
-\# Architecture
+# Architecture
 
 
 
-\## Overview
+## Overview
 
 
 
@@ -60,11 +60,11 @@ flowchart LR
 
 
 
-\## Workflows
+## Workflows
 
 
 
-\### 1. Privileged Session
+### 1. Privileged Session
 
 
 
@@ -130,7 +130,7 @@ The intended order is \*\*target first, then Vault, then JumpServer\*\*. This av
 
 
 
-\### 3. Anomaly Detection
+### 3. Anomaly Detection
 
 
 
